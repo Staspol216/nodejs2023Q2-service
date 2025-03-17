@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { instance } from "./shared/api";
-import HelloWorld from "./components/HelloWorld.vue";
-instance.get("artist");
+import View from "./components/View.vue";
 </script>
 
 <template>
-  <div>dasd</div>
-  <HelloWorld msg="Vite + Vue" />
+  <View />
 </template>
 
 <style scoped>
