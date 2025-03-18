@@ -31,7 +31,6 @@ services:
       - /usr/src/app/backend/node_modules
 
   postgres:
-    container_name: postgres-database
     build:
       context: .
       dockerfile: ./backend/postgres/Dockerfile
@@ -46,6 +45,26 @@ services:
       - home-library-network
     volumes:
       - ./backend/docker/db/data:/var/lib/postgresql/data/
+    tmpfs:
+      - /tmp
+    command:
+      - -c
+      - listen_addresses=*
+      - -c
+      - wal_level=logical
+  electric:
+    image: electricsql/electric
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+      # Not suitable for production. Only use insecure mode in development or if you've otherwise secured the Electric API.
+      # See https://electric-sql.com/docs/guides/security
+      ELECTRIC_INSECURE: true
+    ports:
+      - "3000:3000"
+    networks:
+      - home-library-network
+    depends_on:
+      - postgres
 networks:
   home-library-network:
     driver: bridge
