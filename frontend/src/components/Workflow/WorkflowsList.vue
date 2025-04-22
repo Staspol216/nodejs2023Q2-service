@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
-import { instance } from "../shared/api";
-import type { DB } from "../app/db";
+import { instance } from "../../shared/api";
+import type { DB } from "../../app/db";
+import { useRouter } from "vue-router";
 
 // interface Artist {
 //   grammy: boolean;
@@ -14,6 +15,8 @@ interface Workflow {
   name: string;
 }
 
+const router = useRouter();
+
 const db = inject<DB>("db")!;
 
 const workflows = ref<Workflow[]>([]);
@@ -23,21 +26,25 @@ const getWorkflows = async () => {
   workflows.value = response.data;
 };
 
+const handleClickWorkflow = (id: string) => {
+  router.push({ name: "workflow", params: { id } });
+};
+
 getWorkflows();
 
 onMounted(async () => {
   db.exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
   db.exec(`CREATE TABLE IF NOT EXISTS "track" (
-    "id" uuid NOT NULL DEFAULT uuid_generate_v4(), 
-    "name" character varying NOT NULL, 
-    "duration" integer NOT NULL, 
-    "albumId" uuid, "artistId" uuid, 
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "name" character varying NOT NULL,
+    "duration" integer NOT NULL,
+    "albumId" uuid, "artistId" uuid,
     CONSTRAINT "PK_0631b9bcf521f8fab3a15f2c37e" PRIMARY KEY ("id")
   );
   CREATE TABLE "artist" (
-    "id" uuid NOT NULL DEFAULT uuid_generate_v4(), 
-    "name" character varying NOT NULL, 
-    "grammy" boolean NOT NULL, 
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "name" character varying NOT NULL,
+    "grammy" boolean NOT NULL,
     CONSTRAINT "PK_55b76e71568b5db4d01d3e394ed" PRIMARY KEY ("id")
   );
   `);
@@ -82,6 +89,7 @@ onMounted(async () => {
       :key="workflow.id"
       class="mt-1 text-slate-800 border-1 flex w-full items-center rounded-md p-3 transition-all hover:bg-slate-100 focus:bg-slate-100 active:bg-slate-100 cursor-pointer"
       role="button"
+      @click="() => handleClickWorkflow(workflow.id)"
     >
       {{ workflow.name }}
     </div>

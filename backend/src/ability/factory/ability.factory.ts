@@ -48,7 +48,7 @@ export class AbilityFactory {
       can(Action.Manage, 'all');
     } else {
       can(Action.Read, [Album, Artist, Track, Favorites]);
-      can(Action.Manage, [FavAlbum, FavArtist, FavTrack]);
+      can(Action.Manage, [FavAlbum, FavArtist, FavTrack, Artist, Track, Album]);
       can(Action.Delete, User, { id: user.id });
     }
 

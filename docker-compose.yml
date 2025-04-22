@@ -29,6 +29,21 @@ services:
     volumes:
       - ./backend:/usr/src/app/backend
       - /usr/src/app/backend/node_modules
+  workflow:
+    container_name: workflow
+    build:
+      context: ./workflow
+      dockerfile: ./Dockerfile
+    restart: always
+    ports:
+      - ${WORKFLOW_PORT}:${WORKFLOW_PORT}
+    depends_on:
+      - postgres
+    networks:
+      - home-library-network
+    volumes:
+      - ./workflow:/usr/src/app/workflow
+      - /usr/src/app/workflow/node_modules
 
   postgres:
     build:

@@ -1,8 +1,9 @@
 import { createApp } from "vue";
-import { initAuth } from "./auth";
 import App from "../App.vue";
+import { initDB } from "./db";
+import { router } from "./router";
 
 export const bootstrap = async () => {
-  await initAuth();
-  createApp(App).mount("#app");
+  const db = await initDB();
+  createApp(App).use(router).provide("db", db).mount("#app");
 };

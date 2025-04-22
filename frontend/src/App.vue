@@ -1,22 +1,30 @@
-<script setup lang="ts">
-import View from "./components/View.vue";
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <View />
+  <div class="app-wrapper">
+    <main class="h-screen">
+      <RouterView />
+    </main>
+  </div>
 </template>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+<style>
+.app-wrapper {
+  min-height: 100vh;
+  width: 100%;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.main {
+  padding: 16px;
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 </style>
