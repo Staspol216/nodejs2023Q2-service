@@ -3,7 +3,7 @@ import "@electric-sql/pglite-repl/webcomponent";
 import { nextTick, ref, inject } from "vue";
 import { Panel, VueFlow, useVueFlow } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
-import Icon from "../Graph/Icon.vue";
+import Icon from "../../shared/ui/Icon.vue";
 
 import Graph from "../../components/Graph/Graph.vue";
 import Tabs from "../../shared/ui/tabs/Tabs.vue";
@@ -16,20 +16,17 @@ import { useLayout } from "../Graph/useLayout";
 import type { DB } from "../../app/db";
 import workflowApi from "../../services/workflow";
 import { useRoute } from "vue-router";
-import type { Node, NodeProps } from "@vue-flow/core";
-
-const createGraphNode = (props: NodeProps) => {
-  return {
-    ...props,
-    position: { x: 0, y: 0 },
-  };
-};
+import type { Node as GraphNode } from "@vue-flow/core";
+import type { Workflow } from "../../models/Workflow";
+import { Node } from "../../models/Node";
+import { v4 as uuidv4 } from "uuid";
 
 const db = inject<DB>("db")!;
 
 const route = useRoute();
 
-const nodes = ref<Node[]>([]);
+const workflow = ref<Workflow>();
+const nodes = ref<GraphNode[]>([]);
 const edges = ref([]);
 
 const { layout } = useLayout();
@@ -39,6 +36,12 @@ const getWorkflowById = async () => {
   const workflowModel = await workflowApi.getWorkflowById(
     String(route.params.id)
   );
+  workflow.value = workflowModel;
+  setupGraph(workflowModel);
+};
+getWorkflowById();
+
+const setupGraph = (workflowModel: Workflow) => {
   nodes.value = workflowModel.nodes.map((workflowNode) => {
     return {
       id: workflowNode.id,
@@ -50,15 +53,20 @@ const getWorkflowById = async () => {
   });
 };
 
-getWorkflowById();
-
-async function layoutGraph(direction: "LR" | "TB") {
+const layoutGraph = (direction: "LR" | "TB") => {
   nodes.value = layout(nodes.value, edges.value, direction);
 
   nextTick(() => {
     fitView();
   });
-}
+};
+
+const handleAddNode = async () => {
+  const node = new Node({ id: uuidv4(), name: "Bob", nexts: [] });
+  workflow.value?.addNode(node);
+  const workflowModel = await workflowApi.updateWorkflowById(workflow.value!);
+  setupGraph(workflowModel);
+};
 </script>
 
 <template>
@@ -79,6 +87,10 @@ async function layoutGraph(direction: "LR" | "TB") {
 
           <Panel class="process-panel" position="top-right">
             <div class="layout-panel">
+              <button title="set horizontal layout" @click="handleAddNode">
+                <Icon name="add" />
+              </button>
+
               <button title="set horizontal layout" @click="layoutGraph('LR')">
                 <Icon name="horizontal" />
               </button>

@@ -13,6 +13,14 @@ export class WorkflowApi {
     const response = await this.instance.get(`workflow/${id}`);
     return new Workflow(response.data);
   }
+
+  async updateWorkflowById(workflow: Workflow) {
+    const response = await this.instance.put(`workflow/${workflow.id}`, {
+      workflow,
+    });
+    console.log(response.data);
+    return response.data;
+  }
 }
 
 export default new WorkflowApi(instance);

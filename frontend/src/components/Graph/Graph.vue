@@ -2,7 +2,7 @@
 import { nextTick, ref } from "vue";
 import { Panel, VueFlow, useVueFlow } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
-import Icon from "./Icon.vue";
+import Icon from "../../shared/ui/Icon.vue";
 
 import { useLayout } from "./useLayout";
 import { initialEdges, initialNodes } from "./initial-elements";

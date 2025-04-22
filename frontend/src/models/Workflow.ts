@@ -9,4 +9,9 @@ export class Workflow {
     this.name = data.name;
     this.nodes = data.nodes.map((node) => new Node(node));
   }
+
+  addNode(node: Node) {
+    this.nodes.push(node);
+    return this;
+  }
 }
