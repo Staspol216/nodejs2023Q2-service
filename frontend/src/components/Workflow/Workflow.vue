@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import "@electric-sql/pglite-repl/webcomponent";
-import { nextTick, ref, inject } from "vue";
+import { nextTick, ref, inject, onMounted } from "vue";
 import { Panel, VueFlow, useVueFlow } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
 import Icon from "../../shared/ui/Icon.vue";
@@ -16,42 +16,98 @@ import { useLayout } from "../Graph/useLayout";
 import type { DB } from "../../app/db";
 import workflowApi from "../../services/workflow";
 import { useRoute } from "vue-router";
-import type { Node as GraphNode } from "@vue-flow/core";
+import type { Edge as VueFlowEdge, Node as VueFlowNode } from "@vue-flow/core";
 import type { Workflow } from "../../models/Workflow";
 import { Node } from "../../models/Node";
-import { v4 as uuidv4 } from "uuid";
+import { setupGraph } from "./WorkflowToGraph";
 
 const db = inject<DB>("db")!;
 
 const route = useRoute();
 
 const workflow = ref<Workflow>();
-const nodes = ref<GraphNode[]>([]);
-const edges = ref([]);
+const nodes = ref<VueFlowNode[]>([]);
+const edges = ref<VueFlowEdge[]>([]);
 
 const { layout } = useLayout();
-const { fitView } = useVueFlow();
+const {
+  fitView,
+  addNodes,
+  addEdges,
+  updateEdge,
+  onNodesChange,
+  onEdgesChange,
+  onEdgeUpdate,
+  onConnect,
+  onNodesInitialized,
+} = useVueFlow("workflow");
+
+onNodesChange(async (changes) => {
+  for (const change of changes) {
+    if (change.type === "remove") {
+      workflow.value?.removeNodeById(change.id);
+      await workflowApi.updateWorkflowById(workflow.value!);
+    }
+  }
+});
+
+onEdgesChange(async (changes) => {
+  for (const change of changes) {
+    if (change.type === "remove") {
+      const sourceNode = workflow.value?.getNodeById(change.source);
+      sourceNode?.removeNext(change.target);
+      await workflowApi.updateWorkflowById(workflow.value!);
+    }
+  }
+});
+
+onEdgeUpdate(async ({ edge, connection }) => {
+  const isTargetUpdated = edge.target !== connection.target;
+  const isSourceUpdated = edge.source !== connection.source;
+
+  if (isSourceUpdated) {
+    const oldSourceNode = workflow.value?.getNodeById(edge.source);
+    oldSourceNode?.removeNext(edge.target);
+    const newSourceNode = workflow.value?.getNodeById(connection.source);
+    newSourceNode?.addNext(edge.target);
+  }
+
+  if (isTargetUpdated) {
+    const sourceNode = workflow.value?.getNodeById(edge.source);
+    sourceNode?.removeNext(edge.target);
+    sourceNode?.addNext(connection.target);
+  }
+
+  updateEdge(edge, connection);
+  await workflowApi.updateWorkflowById(workflow.value!);
+});
+
+onConnect(async (params) => {
+  console.log(params);
+  const sourceNode = workflow.value?.getNodeById(params.source);
+  sourceNode?.addNext(params.target);
+
+  addEdges(params);
+  await workflowApi.updateWorkflowById(workflow.value!);
+});
+
+onNodesInitialized(() => {
+  layoutGraph("LR");
+});
 
 const getWorkflowById = async () => {
   const workflowModel = await workflowApi.getWorkflowById(
     String(route.params.id)
   );
   workflow.value = workflowModel;
-  setupGraph(workflowModel);
+  const { nodes: graphNodes, edges: graphEdges } = setupGraph(workflowModel);
+  nodes.value = graphNodes;
+  edges.value = graphEdges;
 };
-getWorkflowById();
 
-const setupGraph = (workflowModel: Workflow) => {
-  nodes.value = workflowModel.nodes.map((workflowNode) => {
-    return {
-      id: workflowNode.id,
-      data: {
-        label: workflowNode.name,
-      },
-      position: { x: 0, y: 0 },
-    };
-  });
-};
+onMounted(() => {
+  getWorkflowById();
+});
 
 const layoutGraph = (direction: "LR" | "TB") => {
   nodes.value = layout(nodes.value, edges.value, direction);
@@ -62,10 +118,17 @@ const layoutGraph = (direction: "LR" | "TB") => {
 };
 
 const handleAddNode = async () => {
-  const node = new Node({ id: uuidv4(), name: "Bob", nexts: [] });
+  const node = new Node({ name: `Node ${workflow.value?.nodes.length! + 1}` });
   workflow.value?.addNode(node);
-  const workflowModel = await workflowApi.updateWorkflowById(workflow.value!);
-  setupGraph(workflowModel);
+  await workflowApi.updateWorkflowById(workflow.value!);
+  const newGraphNode = {
+    id: node.id,
+    data: {
+      label: node.name,
+    },
+    position: { x: 0, y: 0 },
+  };
+  addNodes(newGraphNode);
 };
 </script>
 
@@ -78,19 +141,18 @@ const handleAddNode = async () => {
     </TabsList>
     <TabsContent class="tab-content" value="workflow">
       <div class="h-full layout-flow flex-auto">
-        <VueFlow
-          :nodes="nodes"
-          :edges="edges"
-          @nodes-initialized="layoutGraph('LR')"
-        >
+        <VueFlow v-model:nodes="nodes" v-model:edges="edges" fit-view-on-init>
           <Background />
 
-          <Panel class="process-panel" position="top-right">
+          <Panel class="process-panel" position="top-left">
             <div class="layout-panel">
               <button title="set horizontal layout" @click="handleAddNode">
                 <Icon name="add" />
               </button>
-
+            </div>
+          </Panel>
+          <Panel class="process-panel" position="top-right">
+            <div class="layout-panel">
               <button title="set horizontal layout" @click="layoutGraph('LR')">
                 <Icon name="horizontal" />
               </button>

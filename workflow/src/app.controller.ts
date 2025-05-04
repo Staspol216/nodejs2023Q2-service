@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -15,7 +16,6 @@ export class AppController {
 
   @Get()
   async getWorkflows(): Promise<Workflow[]> {
-    console.log(111);
     const workflows = await this.appService.getWorkflows();
     return workflows;
   }
@@ -34,5 +34,10 @@ export class AppController {
     @Body() workflow: Workflow,
   ) {
     return await this.appService.updateWorkflow(workflow, uuid);
+  }
+
+  @Delete(':uuid')
+  async delete(@Param('uuid', ParseUUIDPipe) uuid: string) {
+    return await this.appService.deleteWorkflow(uuid);
   }
 }

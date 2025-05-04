@@ -11,7 +11,7 @@ const nodes = ref(initialNodes);
 const edges = ref(initialEdges);
 
 const { layout } = useLayout();
-const { fitView } = useVueFlow();
+const { fitView } = useVueFlow("mock");
 
 async function layoutGraph(direction: "LR" | "TB") {
   nodes.value = layout(nodes.value, edges.value, direction);

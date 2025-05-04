@@ -15,10 +15,15 @@ export class WorkflowApi {
   }
 
   async updateWorkflowById(workflow: Workflow) {
-    const response = await this.instance.put(`workflow/${workflow.id}`, {
-      workflow,
-    });
-    console.log(response.data);
+    const response = await this.instance.put<Workflow>(
+      `workflow/${workflow.id}`,
+      workflow
+    );
+    return response.data;
+  }
+
+  async deleteWorkflowById(id: string) {
+    const response = await this.instance.delete<Workflow>(`workflow/${id}`);
     return response.data;
   }
 }

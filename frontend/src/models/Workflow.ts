@@ -14,4 +14,13 @@ export class Workflow {
     this.nodes.push(node);
     return this;
   }
+
+  getNodeById(id: string) {
+    return this.nodes.find((node) => node.id === id)!;
+  }
+
+  removeNodeById(id: string) {
+    const removeIndex = this.nodes.findIndex((node) => node.id === id);
+    this.nodes.splice(removeIndex, 1);
+  }
 }

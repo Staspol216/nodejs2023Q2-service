@@ -37,7 +37,11 @@ export class AppService {
       ...dto,
     });
 
-    console.log(updatedWorkflow);
-    return new Workflow(updatedWorkflow);
+    return updatedWorkflow;
+  }
+
+  async deleteWorkflow(id: string) {
+    const result = await this.workflowRepository.delete(id);
+    return result;
   }
 }
